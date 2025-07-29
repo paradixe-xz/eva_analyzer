@@ -110,11 +110,17 @@ def process_csv(input_file, output_file):
             for col in df.columns:
                 new_row[col] = row[col]
             
-            # Crear DataFrame temporal para la nueva fila
+            # Crear DataFrame temporal para la nueva fila y asegurar índices únicos
             temp_df = pd.DataFrame([new_row])
             
-            # Concatenar de manera segura
-            result_df = pd.concat([result_df, temp_df], ignore_index=True)
+            # Concatenar de manera segura con índices únicos
+            if len(result_df) == 0:
+                result_df = temp_df.copy()
+            else:
+                # Asegurar que los índices sean únicos
+                result_df = result_df.reset_index(drop=True)
+                temp_df = temp_df.reset_index(drop=True)
+                result_df = pd.concat([result_df, temp_df], ignore_index=True)
             
             # Guardar el CSV de salida después de cada análisis
             result_df.to_csv(output_file, index=False)
