@@ -71,7 +71,10 @@ def process_csv(input_file, output_file):
             result_df = pd.read_csv(output_file)
             print(f"📊 CSV de resultados cargado con {len(result_df)} filas procesadas")
         else:
-            result_df = pd.DataFrame(columns=['conversation_id', 'call_status', 'justification'] + list(df.columns))
+            # Crear DataFrame vacío con las columnas correctas
+            base_columns = ['conversation_id', 'call_status', 'justification']
+            all_columns = base_columns + list(df.columns)
+            result_df = pd.DataFrame(columns=all_columns)
             print("🆕 Creando nuevo archivo de resultados")
         
         # Contadores
@@ -85,7 +88,7 @@ def process_csv(input_file, output_file):
             transcript = row.get('transcript', '[]')
             
             # Verificar si la llamada ya fue procesada
-            if conversation_id in result_df['conversation_id'].values:
+            if len(result_df) > 0 and conversation_id in result_df['conversation_id'].values:
                 print(f"⏭️  Llamada {conversation_id} ya procesada, omitiendo...")
                 skipped += 1
                 continue
@@ -97,12 +100,21 @@ def process_csv(input_file, output_file):
             category, justification = parse_response(response)
             
             # Crear nueva fila con los datos
-            new_row = {'conversation_id': conversation_id, 'call_status': category, 'justification': justification}
+            new_row = {
+                'conversation_id': conversation_id, 
+                'call_status': category, 
+                'justification': justification
+            }
+            
+            # Agregar todas las columnas del CSV original
             for col in df.columns:
                 new_row[col] = row[col]
             
-            # Agregar la fila al DataFrame de resultados
-            result_df = pd.concat([result_df, pd.DataFrame([new_row])], ignore_index=True)
+            # Crear DataFrame temporal para la nueva fila
+            temp_df = pd.DataFrame([new_row])
+            
+            # Concatenar de manera segura
+            result_df = pd.concat([result_df, temp_df], ignore_index=True)
             
             # Guardar el CSV de salida después de cada análisis
             result_df.to_csv(output_file, index=False)
@@ -125,6 +137,8 @@ def process_csv(input_file, output_file):
         sys.exit(1)
     except Exception as e:
         print(f"❌ Error general: {str(e)}")
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
 
 if __name__ == "__main__":
