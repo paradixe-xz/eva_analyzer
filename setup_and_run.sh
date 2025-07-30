@@ -63,7 +63,7 @@ source venv/bin/activate
 # Instalar dependencias de Python
 print_status "Instalando dependencias de Python..."
 pip install --upgrade pip
-pip install pandas requests ollama
+pip install pandas requests ollama flask
 
 # Verificar si Ollama está instalado
 if ! command -v ollama &> /dev/null; then
